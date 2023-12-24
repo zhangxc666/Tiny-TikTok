@@ -4,6 +4,7 @@ import (
 	"douyin/cache"
 	"douyin/config"
 	"douyin/dao"
+	"douyin/global"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -27,6 +28,11 @@ func main() {
 	}
 	//2.初始化redis数据库
 	err = cache.RedisPoolInit()
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	global.Group.Rdb, err = cache.InitRedis()
 	if err != nil {
 		fmt.Println(err.Error())
 		return

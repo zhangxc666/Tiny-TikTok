@@ -26,6 +26,7 @@ type Redis struct {
 	Authpassword string `yaml:"authpassword"`
 	Maxidle      int    `yaml:"maxidle"`
 	Maxactive    int    `yaml:"maxactive"`
+	Db           int    `yaml:"db"`
 }
 
 type Resouece struct {

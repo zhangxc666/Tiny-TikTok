@@ -9,10 +9,12 @@ import (
 func TestSetUserCount(t *testing.T) {
 	err := config.ConfInit()
 	if err != nil {
+		panic(err)
 		return
 	}
 	err = RedisPoolInit()
 	if err != nil {
+		panic(err)
 		return
 	}
 	if err != nil {

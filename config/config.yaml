@@ -2,7 +2,7 @@
 mysql:
   username: root
   password: ""
-  ipaddress: 114.214.189.100
+  ipaddress: localhost
   port: 3306
   dbname: douyin
 
@@ -13,8 +13,9 @@ redis:
   authpassword: 123456
   maxidle: 5              #连接池最大空闲数
   maxactive: 0            #连接池最大连接数 0 表示不设上
+  db: 1
 
 # resource(静态图片和视频的资源)
 resouece:
-  ipaddress: 114.214.189.100
+  ipaddress: localhost
   port: 3000

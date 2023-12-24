@@ -2,12 +2,12 @@ package cache
 
 import (
 	"douyin/config"
+	"douyin/utls"
 	"errors"
 	"fmt"
+	"github.com/gomodule/redigo/redis"
 	"log"
 	"time"
-
-	"github.com/gomodule/redigo/redis"
 )
 
 // RedisPool 数据库连接池
@@ -38,6 +38,7 @@ func RedisPoolInit() error {
 			return c, err
 		},
 	}
+	go utls.ExecuteTimedTask(time.Second*60, PersistHistoryToDB)
 	return nil
 }
 

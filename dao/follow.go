@@ -7,9 +7,9 @@ import (
 
 type Follow struct {
 	//关注者
-	FollowId int64 `gorm:"column:follow_id"`
+	FollowId int64 `gorm:"column:follow_id;primary_key"`
 	//
-	FollowedId int64 `gorm:"column:followed_id"`
+	FollowedId int64 `gorm:"column:followed_id;primary_key"`
 }
 
 func (Follow) TableName() string {
@@ -81,10 +81,16 @@ func (FollowDao) QueryFollowerLists(userid int64) ([]User, error) {
 
 func (FollowDao) QueryEachFollow(userid int64) ([]User, error) {
 	var userLists []User
-	err := db.Raw("SELECT * FROM  `user` WHERE user.user_id != ?	 and user.user_id in \n(SELECT DISTINCT follow.followed_id FROM  follow \njoin\n(SELECT follow.follow_id FROM follow WHERE follow.followed_id = ?) a \non\na.follow_id = follow.followed_id) ", userid, userid).Scan(&userLists).Error
+	err := db.Raw("SELECT * FROM  `user` WHERE user.user_id != ? and user.user_id in \n(SELECT DISTINCT follow.followed_id FROM  follow \njoin\n(SELECT follow.follow_id FROM follow WHERE follow.followed_id = ?) a \non\na.follow_id = follow.followed_id) ", userid, userid).Scan(&userLists).Error
 	if err != nil {
 		return nil, err
 	}
 	fmt.Printf("%#v", userLists)
 	return userLists, nil
+}
+
+func (FollowDao) IsBothFollow(userid, friendID int64) bool {
+	cnt := int64(-1)
+	db.Debug().Model(&Follow{}).Where("( follow_id = ? and followed_id = ?  ) or ( follow_id = ?  and followed_id = ? )", userid, friendID, friendID, userid).Count(&cnt)
+	return cnt == 2
 }

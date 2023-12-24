@@ -22,10 +22,11 @@ type UserResponse struct {
 }
 
 func Register(c *gin.Context) {
-
-	username := c.MustGet("username").(string)
-	password := c.MustGet("password").(string)
-
+	username := c.Query("username")
+	password := c.Query("password")
+	if password != "" {
+		
+	}
 	info, err := service.UserRegister(username, password)
 	if err != nil {
 		log.Println(err.Error())

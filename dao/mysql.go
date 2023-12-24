@@ -2,6 +2,7 @@ package dao
 
 import (
 	"douyin/config"
+	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -16,4 +17,18 @@ func DbInit() error {
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	db.AutoMigrate(&Comment{}, &Follow{}, &Like{}, &Message{}, &User{}, &Video{})
 	return err
+}
+
+func ExecuteTransaction(operation func(*gorm.DB) error) error {
+	tx := db.Begin()
+	err := operation(tx)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("事务执行失败：%w", err)
+	}
+	err = tx.Commit().Error
+	if err != nil {
+		return fmt.Errorf("事务提交失败：%w", err)
+	}
+	return nil
 }

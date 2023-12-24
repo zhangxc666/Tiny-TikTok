@@ -7,6 +7,7 @@ import (
 	"douyin/dao"
 	"douyin/utls"
 	"errors"
+	"fmt"
 )
 
 // UserRegisInfo 返回给handle层的数据
@@ -22,10 +23,9 @@ func UserRegister(username string, password string) (*UserRegisInfo, error) {
 	var info UserRegisInfo
 	var token string
 	var user *dao.User
-
+	fmt.Println(username, password)
 	//进行加密
 	password = utls.Md5Encryption(password)
-
 	user, err = dao.GetUserInstance().QueryUserByName(username)
 
 	if user.ID != 0 {
@@ -68,6 +68,7 @@ func UserRegister(username string, password string) (*UserRegisInfo, error) {
 }
 
 func UserLogin(username string, password string) (*UserRegisInfo, error) {
+	fmt.Println(username, password)
 	var err error
 	var token string
 	var user *dao.User
