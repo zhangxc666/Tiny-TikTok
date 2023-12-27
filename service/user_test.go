@@ -1,13 +1,14 @@
 package service
 
 import (
+	"context"
 	"douyin/cache"
 	"douyin/dao"
 	"fmt"
 	"testing"
 )
 
-func TestUserRegister(t *testing.T) {
+func TestRegister(t *testing.T) {
 	err := dao.DbInit()
 	if err != nil {
 		return
@@ -49,7 +50,7 @@ func TestUserRegister(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			userinfo, err := UserRegister(test.username, test.password)
+			userinfo, err := Register(context.Background(), test.username, test.password)
 			if err != nil {
 				t.Errorf("UserRegister ERROR is %v", err)
 				return
@@ -59,7 +60,7 @@ func TestUserRegister(t *testing.T) {
 	}
 }
 
-func TestUserLogin(t *testing.T) {
+func TestLogin(t *testing.T) {
 	err := dao.DbInit()
 	if err != nil {
 		t.Error(err.Error())
@@ -98,7 +99,7 @@ func TestUserLogin(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			userinfo, err := UserLogin(test.username, test.password)
+			userinfo, err := Login(context.Background(), test.username, test.password)
 			if err != nil {
 				t.Errorf("UserRegister ERROR is %v", err)
 				return

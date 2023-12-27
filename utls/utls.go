@@ -2,6 +2,7 @@ package utls
 
 import (
 	"douyin/dao"
+	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"log"
@@ -24,10 +25,70 @@ func CreateChatPersistKey(sendID, targetID int64) string {
 	return "chat::message::" + strconv.FormatInt(sendID, 10) + "-" + strconv.FormatInt(targetID, 10)
 }
 
+func CreateFollowKey(userID int64) string {
+	return "follow::" + strconv.FormatInt(userID, 10)
+}
+
+func CreateFanKey(userID int64) string {
+	return "fan::" + strconv.FormatInt(userID, 10)
+}
+
+func CreateFriendKey(userID int64) string {
+	return "friend::" + strconv.FormatInt(userID, 10)
+}
+
+func CreateUserInfoKey(userID int64) string {
+	return "user_info::" + strconv.FormatInt(userID, 10)
+}
+
+func CreateUserCountKey(userID int64) string {
+	return "user_count::" + strconv.FormatInt(userID, 10)
+}
+
+func CreateMapUserInfo(userInfo *dao.User2) map[string]interface{} {
+	userStr, _ := json.Marshal(userInfo)
+	userMap := make(map[string]interface{})
+	_ = json.Unmarshal(userStr, &userMap)
+	delete(userMap, "Usercount")
+	fmt.Println("userInfo: ", userMap)
+	return userMap
+}
+
+func CreateMapUserCount(userCount *dao.UserCount) map[string]interface{} {
+	userStr, _ := json.Marshal(userCount)
+	userMap := make(map[string]interface{})
+	_ = json.Unmarshal(userStr, &userMap)
+	delete(userMap, "CreatedAt")
+	delete(userMap, "DeletedAt")
+	delete(userMap, "UpdatedAt")
+	delete(userMap, "ID")
+	fmt.Println("userCount: ", userMap)
+	return userMap
+}
+
 func CreateMessageContent(userID, targetID int64, content string) string {
 	return fmt.Sprintf("%d-%d-%s", userID, targetID, content)
 }
 
+func CreateUserInfo(userMap map[string]string) (*dao.User2, error) {
+	userStr, _ := json.Marshal(userMap)
+	userInfo := new(dao.User2)
+	err := json.Unmarshal(userStr, userInfo)
+	if err != nil {
+		return nil, err
+	}
+	return userInfo, err
+}
+
+func CreateUserCount(userMap map[string]string) (*dao.UserCount, error) {
+	userStr, _ := json.Marshal(userMap)
+	userCount := new(dao.UserCount)
+	err := json.Unmarshal(userStr, userCount)
+	if err != nil {
+		return nil, err
+	}
+	return userCount, err
+}
 func StringToMessage(member, score string) dao.Message {
 	str := strings.SplitN(member, "-", 3)
 	userid, _ := strconv.ParseInt(str[0], 10, 64)
@@ -69,5 +130,21 @@ func ExecuteTimedTask(interval time.Duration, f func() error) {
 				return
 			}
 		}
+	}
+}
+
+func ChangeUser2ToUser(user *dao.User2) *dao.User {
+	return &dao.User{
+		ID:              user.ID,
+		Name:            user.Name,
+		FollowCount:     user.Usercount.FollowCount,
+		FollowerCount:   user.Usercount.FollowerCount,
+		IsFollow:        user.IsFollow,
+		Avatar:          user.Avatar,
+		BackGroundImage: user.BackGroundImage,
+		Signature:       user.Signature,
+		TotalFavorite:   user.Usercount.TotalFavorited,
+		WorkCount:       user.Usercount.WorkCount,
+		FavoriteCount:   user.Usercount.FavoriteCount,
 	}
 }

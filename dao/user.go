@@ -44,6 +44,16 @@ func GetUserInstance() *UserDao {
 	return userDao
 }
 
+// QueryUserLists 批量查询用户信息
+func (UserDao) QueryUserLists(targetID []int64) ([]User, error) {
+	var userLists []User
+	res := db.Model(&User{}).Where("user_id in ?", targetID).Find(&userLists)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return userLists, nil
+}
+
 // QueryUserByID 通过id查找user
 func (UserDao) QueryUserByID(userID int64) (*User, error) {
 	var user User

@@ -167,28 +167,28 @@ func DeleteUserVideoRelation(userid, videoId int64) error {
 }
 
 // SetUserCount 设置user计数
-func SetUserCount(userid int64) error {
-	conn := RedisPool.Get()
-
-	defer func(conn redis.Conn) {
-		err := conn.Close()
-		if err != nil {
-		}
-	}(conn)
-
-	key := getUserCountKey(userid)
-	_, err := conn.Do("hmset", redis.Args{key}.AddFlat(map[string]int64{
-		"followCount":   0,
-		"followerCount": 0,
-		"workCount":     0,
-		"favoriteCount": 0,
-		"totalFavorite": 0,
-	})...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//func SetUserCount(userid int64) error {
+//	conn := RedisPool.Get()
+//
+//	defer func(conn redis.Conn) {
+//		err := conn.Close()
+//		if err != nil {
+//		}
+//	}(conn)
+//
+//	key := getUserCountKey(userid)
+//	_, err := conn.Do("hmset", redis.Args{key}.AddFlat(map[string]int64{
+//		"followCount":   0,
+//		"followerCount": 0,
+//		"workCount":     0,
+//		"favoriteCount": 0,
+//		"totalFavorite": 0,
+//	})...)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 func GetUserFollowCount(userID int64) (int64, error) {
 	res, err := get(userID, "followCount")

@@ -62,7 +62,7 @@ func FollowList(c *gin.Context) {
 		return
 	}
 
-	userLists, err = service.GetFollowLists(int64(userid))
+	userLists, err = service.GetFollowList(c, int64(userid))
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, FollowResponse{
@@ -99,7 +99,7 @@ func FollowerList(c *gin.Context) {
 		return
 	}
 
-	userLists, err = service.GetFollowerLists(int64(userid))
+	userLists, err = service.GetFanList(c, int64(userid))
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, FollowResponse{
@@ -134,7 +134,7 @@ func FriendList(c *gin.Context) {
 		return
 	}
 
-	userLists, err = service.GetFriendLists(int64(userid))
+	userLists, err = service.GetFriendList(c, int64(userid))
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, FollowResponse{

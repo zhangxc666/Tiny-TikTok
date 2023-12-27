@@ -47,8 +47,8 @@ func UserAuth() gin.HandlerFunc {
 		//1.首先到redis中查找，没有的话去mysql中查找
 		//2.mysql中没有说明token失败
 		var isExists = true
-
-		err = cache.UserIsExists(claim.UserId)
+		userKey := utls.CreateUserInfoKey(claim.UserId)
+		isExists, err = cache.ExistUserInfoKey(c, userKey)
 		if err != nil {
 			fmt.Println(err)
 			//在redis中不存在
@@ -56,8 +56,7 @@ func UserAuth() gin.HandlerFunc {
 		}
 		if !isExists {
 			//进行db查找
-			var user *dao.User
-			user, err = dao.GetUserInstance().QueryUserByID(claim.UserId)
+			exist, err := dao.GetUser2Instance().ExistUserByUserID(claim.UserId)
 			if err != nil {
 				c.JSON(http.StatusOK, handle.UserResponse{
 					Response: common.Response{StatusCode: 1, StatusMsg: "token find failed"},
@@ -65,7 +64,7 @@ func UserAuth() gin.HandlerFunc {
 				c.Abort()
 				return
 			}
-			if user.ID == 0 {
+			if exist == false {
 				c.JSON(http.StatusOK, handle.UserResponse{
 					Response: common.Response{StatusCode: 1, StatusMsg: "id is not exists"},
 				})

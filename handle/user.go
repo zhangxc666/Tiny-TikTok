@@ -24,10 +24,16 @@ type UserResponse struct {
 func Register(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
-	if password != "" {
-		
+	if password == "" {
+		c.JSON(http.StatusOK, UserRegisterResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "密码不能为空",
+			},
+		})
+		return
 	}
-	info, err := service.UserRegister(username, password)
+	info, err := service.Register(c, username, password)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, UserRegisterResponse{
@@ -48,7 +54,7 @@ func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
 
-	info, err := service.UserLogin(username, password)
+	info, err := service.Login(c, username, password)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, UserRegisterResponse{
@@ -69,7 +75,8 @@ func UserInfo(c *gin.Context) {
 	var err error
 	var user *dao.User
 
-	userid, err := strconv.Atoi(c.Query("user_id"))
+	targetID, err := strconv.Atoi(c.Query("user_id"))
+	userID, _ := c.MustGet("userid").(int64)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, UserResponse{
@@ -78,7 +85,7 @@ func UserInfo(c *gin.Context) {
 		return
 	}
 
-	user, err = service.GetUserInfo(int64(userid))
+	user, err = service.GetUserIndex(c, userID, int64(targetID))
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, UserResponse{
