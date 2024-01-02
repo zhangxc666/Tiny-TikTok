@@ -115,7 +115,7 @@ func (FollowDao) QueryAllFriendID(userID int64) ([]int64, error) {
 
 func (FollowDao) IsFollow(userID, targetID int64) (bool, error) {
 	var count int64
-	err := db.Model(&Follow{}).Where("follow_id = ? and follower_id = ?", userID, targetID).Count(&count).Error
+	err := db.Model(&Follow{}).Where("follow_id = ? and followed_id = ?", userID, targetID).Count(&count).Error
 	if err != nil {
 		return false, err
 	}

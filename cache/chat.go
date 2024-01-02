@@ -4,7 +4,6 @@ import (
 	"context"
 	"douyin/dao"
 	"douyin/utls"
-	"strconv"
 )
 
 // PushManyHistoryToRedis 把聊天记录推送至缓存中
@@ -34,32 +33,6 @@ func GetMessageList(key, low, high string) (*[]dao.Message, error) {
 		return nil, err
 	}
 	return utls.ConvertToMessage(s), nil
-}
-
-// PersistHistoryToDB 持久化聊天记录至DB中
-func PersistHistoryToDB() error {
-	rc := MakeRdbCache()
-	messageKeys, err := rc.GetKeys(context.Background(), "chat::message::*")
-	if err != nil {
-		return err
-	}
-	for _, key := range messageKeys {
-		messageList, err := GetMessageList(key, strconv.Itoa(0), "inf")
-		if err != nil {
-			return err
-		}
-		for _, message := range *messageList {
-			err := dao.GetMessageInstance().AddMessage(&message)
-			if err != nil {
-				return err
-			}
-		}
-		err = RemovePersistMessage(key, *messageList)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // RemovePersistMessage 移除持久化缓存

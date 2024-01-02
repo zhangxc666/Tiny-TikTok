@@ -32,7 +32,7 @@ func RelationAction(c *gin.Context) {
 		return
 	}
 
-	err = service.FollowOrCancel(userid, int64(toUserid), action)
+	err = service.FollowOrCancel(c, userid, int64(toUserid), action)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, common.Response{

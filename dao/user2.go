@@ -56,6 +56,19 @@ func (UserDao2) AddUser(user *User2) error {
 	return nil
 }
 
+func (UserDao2) AddCount(count *UserCount) error {
+	res := db.Create(count)
+	if res.Error != nil {
+		return res.Error
+	}
+	return nil
+}
+
+func (UserDao2) UpdateCount(count *UserCount) error {
+	res := db.Model(count).Where("user_id = ?", count.UserID).Updates(map[string]interface{}{"follow_count": count.FollowCount, "follower_count": count.FollowerCount})
+	return res.Error
+}
+
 func (UserDao2) ExistUserByUsername(username string) (bool, error) {
 	var count int64
 	err := db.Model(&User2{}).Where("name = ?", username).Count(&count).Error

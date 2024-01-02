@@ -125,7 +125,9 @@ func ExecuteTimedTask(interval time.Duration, f func() error) {
 		select {
 		case <-timer.C:
 			err := f()
+
 			if err != nil {
+				panic(err)
 				log.Println(err)
 				return
 			}

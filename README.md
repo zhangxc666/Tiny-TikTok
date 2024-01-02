@@ -8,8 +8,9 @@ Gin+Gorm+Go-Redis+Ffmpeg+Mysql+Redis
 
 ### 完成列表
 
-- 完成message功能，增加了message写回优化
-- 完成User功能，增加了count写回优化，info的旁路缓存
+- 完成message功能，增加了message缓存（写回）
+- 完成User功能，增加了count（写回），info（旁路缓存）的缓存
+- 完成follow功能，增加了关注、粉丝和好友id的缓存（延迟双删）。
 
 
 

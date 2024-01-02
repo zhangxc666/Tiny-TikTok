@@ -63,16 +63,6 @@ func AddManyFriends(c context.Context, key string, IDs []int64) error {
 	return err
 }
 
-func AddFollow(c context.Context, key string, targetID []int64) error {
-	rc := MakeRdbCache()
-	_, err := rc.SAdd(c, key, targetID)
-	if err != nil {
-		return err
-	}
-	_, err = rc.Expire(c, key, time.Hour*48)
-	return err
-}
-
 func AddFollowCount(c context.Context, userCountKey string) error {
 	rc := MakeRdbCache()
 	_, err := rc.IncrHMCount(c, userCountKey, "follow_count", 1)
@@ -97,6 +87,16 @@ func SubFollowerCount(c context.Context, userCountKey string) error {
 	return err
 }
 func DelFollow(c context.Context, key string) error {
+	rc := MakeRdbCache()
+	return rc.Del(c, key)
+}
+
+func DelFan(c context.Context, key string) error {
+	rc := MakeRdbCache()
+	return rc.Del(c, key)
+}
+
+func DelFriend(c context.Context, key string) error {
 	rc := MakeRdbCache()
 	return rc.Del(c, key)
 }

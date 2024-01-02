@@ -4,6 +4,7 @@ import (
 	"context"
 	"douyin/config"
 	"douyin/global"
+	"douyin/utls"
 	"github.com/go-redis/redis/v8"
 	"time"
 )
@@ -26,6 +27,8 @@ func InitRedis() (*redis.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	go utls.ExecuteTimedTask(time.Second*60, PersistHistoryToDB)
+	go utls.ExecuteTimedTask(time.Second*60, PersistCountToDB)
 	return rdb, nil
 }
 

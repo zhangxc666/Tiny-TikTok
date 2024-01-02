@@ -22,6 +22,6 @@ func TestUserDao2_AddUser(t *testing.T) {
 }
 func TestUserDao2_QueryUserInfoByUserID(t *testing.T) {
 	DBInit()
-	user, _ := GetUser2Instance().QueryUserInfoByUserID(10)
+	user, _ := GetUser2Instance().QueryUserInfoByUserID(1)
 	fmt.Println(user.Usercount)
 }

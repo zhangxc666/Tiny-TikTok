@@ -6,6 +6,7 @@ import (
 	"douyin/dao"
 	"douyin/utls"
 	"errors"
+	"fmt"
 )
 
 type UserRegisInfo struct {
@@ -16,6 +17,7 @@ type UserRegisInfo struct {
 func GetUserList(ctx context.Context, userID int64, targetIDs []int64) ([]dao.User, error) {
 	userList := make([]dao.User, len(targetIDs))
 	isFollowList, err := IsFollowManyTargets(ctx, userID, targetIDs)
+	fmt.Println(targetIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -34,21 +36,18 @@ func GetUserList(ctx context.Context, userID int64, targetIDs []int64) ([]dao.Us
 			if err != nil {
 				return nil, err
 			}
-		}
-		userCount, err := cache.GetUserCount(ctx, userCountKey)
-		if err != nil {
-			return nil, err
-		}
-		if userCount == nil {
-			userCount, err = dao.GetUser2Instance().QueryUserCountByUserID(targetID)
+			fmt.Println("userInfo:", userInfo)
+		} else {
+			if err := SetUserCountToCache(ctx, targetID); err != nil {
+				return nil, err
+			}
+			userCount, err := cache.GetUserCount(ctx, userCountKey)
 			if err != nil {
 				return nil, err
 			}
-			if err = cache.SetUserCount(ctx, userCountKey, utls.CreateMapUserCount(userCount)); err != nil {
-				return nil, err
-			}
+			fmt.Println(userCount, "usercount:")
+			userInfo.Usercount = userCount
 		}
-		userInfo.Usercount = userCount
 		userInfo.IsFollow = isFollowList[i]
 		userList[i] = *utls.ChangeUser2ToUser(userInfo)
 	}
@@ -108,6 +107,7 @@ func Login(ctx context.Context, username, password string) (*UserRegisInfo, erro
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(userInfo.Name)
 	if utls.CheckPassword(password, userInfo.Password) == false {
 		return nil, errors.New("用户名或密码错误")
 	}
@@ -137,6 +137,9 @@ func GetUserIndex(ctx context.Context, userID, targetID int64) (*dao.User, error
 	if err != nil {
 		return nil, err
 	}
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return nil, err
+	}
 	userCount, err := cache.GetUserCount(ctx, userCountKey)
 	if err != nil {
 		return nil, err
@@ -160,8 +163,27 @@ func GetUserIndex(ctx context.Context, userID, targetID int64) (*dao.User, error
 	return utls.ChangeUser2ToUser(user), nil
 }
 
+func SetUserCountToCache(ctx context.Context, userID int64) error {
+	userKey := utls.CreateUserCountKey(userID)
+	if exist, err := cache.KeyExists(ctx, userKey); err != nil {
+		return err
+	} else if exist == false {
+		userCount, err := dao.GetUser2Instance().QueryUserCountByUserID(userID)
+		if err != nil {
+			return err
+		}
+		if err := cache.SetUserCount(ctx, userKey, utls.CreateMapUserCount(userCount)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func AddWorkCount(ctx context.Context, userID int64) error {
 	userCountKey := utls.CreateUserCountKey(userID)
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return err
+	}
 	if err := cache.AddWorkCount(ctx, userCountKey); err != nil {
 		return err
 	}
@@ -171,6 +193,12 @@ func AddWorkCount(ctx context.Context, userID int64) error {
 func AddFavorCount(ctx context.Context, userID, targetID int64) error {
 	userCountKey := utls.CreateUserCountKey(userID)
 	targetCountKey := utls.CreateUserCountKey(targetID)
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return err
+	}
+	if err := SetUserCountToCache(ctx, targetID); err != nil {
+		return err
+	}
 	if err := cache.AddFavorCount(ctx, userCountKey); err != nil {
 		return err
 	}
@@ -182,6 +210,12 @@ func AddFavorCount(ctx context.Context, userID, targetID int64) error {
 
 func SubFavorCount(ctx context.Context, userID, targetID int64) error {
 	userCountKey, targetCountKey := utls.CreateUserCountKey(userID), utls.CreateUserCountKey(targetID)
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return err
+	}
+	if err := SetUserCountToCache(ctx, targetID); err != nil {
+		return err
+	}
 	if err := cache.SubFavorCount(ctx, userCountKey); err != nil {
 		return err
 	}

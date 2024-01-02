@@ -5,7 +5,123 @@ import (
 	"douyin/cache"
 	"douyin/dao"
 	"douyin/utls"
+	"errors"
+	"time"
 )
+
+func FollowOrCancel(ctx context.Context, userID int64, targetID int64, action string) error {
+	if userID == targetID {
+		return errors.New("无法自己关注自己")
+	}
+	exist, err := dao.GetFollowInstance().IsFollow(userID, targetID)
+	if err != nil {
+		return err
+	}
+	switch action {
+	case "1": // 关注
+		if exist {
+			return errors.New("无法关注已关注的用户")
+		}
+		// 延迟双删-第一次删除
+		var isFollow bool
+		if isFollow, err = IsFollowTarget(ctx, targetID, userID); err != nil {
+			return err
+		} else if isFollow {
+			friendKey1, friendKey2 := utls.CreateFriendKey(userID), utls.CreateFriendKey(targetID)
+			if err := cache.DelFriend(ctx, friendKey1); err != nil {
+				return err
+			}
+			if err := cache.DelFriend(ctx, friendKey2); err != nil {
+				return err
+			}
+		}
+		followKey, fanKey := utls.CreateFollowKey(userID), utls.CreateFanKey(targetID)
+		if err := cache.DelFollow(ctx, followKey); err != nil {
+			return err
+		}
+		if err := cache.DelFan(ctx, fanKey); err != nil {
+			return err
+		}
+		// 判断是否对方关注了自己，如果关注则双删好友缓存
+
+		// 操作数据库
+		if err := dao.GetFollowInstance().AddFollow(&dao.Follow{FollowId: userID, FollowedId: targetID}); err != nil {
+			return err
+		}
+		time.Sleep(time.Millisecond * 100)
+		// 第二次删除
+		if err := cache.DelFollow(ctx, followKey); err != nil {
+			return err
+		}
+		if err := cache.DelFan(ctx, fanKey); err != nil {
+			return err
+		}
+		if isFollow {
+			friendKey1, friendKey2 := utls.CreateFriendKey(userID), utls.CreateFriendKey(targetID)
+			if err := cache.DelFriend(ctx, friendKey1); err != nil {
+				return err
+			}
+			if err := cache.DelFriend(ctx, friendKey2); err != nil {
+				return err
+			}
+		}
+		// 增加count
+		if err := AddFollowCount(ctx, userID, targetID); err != nil {
+			return err
+		}
+	case "2":
+		if !exist {
+			return errors.New("当前用户未关注，无法取消关注")
+		}
+		followKey, fanKey := utls.CreateFollowKey(userID), utls.CreateFanKey(targetID)
+		// 第一次删除
+		var isFollow bool
+		if isFollow, err = IsFollowTarget(ctx, userID, targetID); err != nil {
+			return err
+		} else if isFollow {
+			friendKey1, friendKey2 := utls.CreateFriendKey(userID), utls.CreateFriendKey(targetID)
+			if err := cache.DelFriend(ctx, friendKey1); err != nil {
+				return err
+			}
+			if err := cache.DelFriend(ctx, friendKey2); err != nil {
+				return err
+			}
+		}
+		if err := cache.DelFollow(ctx, followKey); err != nil {
+			return err
+		}
+		if err := cache.DelFan(ctx, fanKey); err != nil {
+			return err
+		}
+		// 操作数据库
+		if err := dao.GetFollowInstance().DeleteFollow(&dao.Follow{FollowId: userID, FollowedId: targetID}); err != nil {
+			return err
+		}
+		time.Sleep(time.Millisecond * 100)
+		// 第二次删除
+		if err := cache.DelFollow(ctx, followKey); err != nil {
+			return err
+		}
+		if err := cache.DelFan(ctx, fanKey); err != nil {
+			return err
+		}
+		if isFollow {
+			friendKey1, friendKey2 := utls.CreateFriendKey(userID), utls.CreateFriendKey(targetID)
+			if err := cache.DelFriend(ctx, friendKey1); err != nil {
+				return err
+			}
+			if err := cache.DelFriend(ctx, friendKey2); err != nil {
+				return err
+			}
+		}
+		if err := SubFollowCount(ctx, userID, targetID); err != nil {
+			return err
+		}
+	default:
+		return errors.New("未知操作")
+	}
+	return nil
+}
 
 // GetFollowList 获取所有关注的人的信息
 func GetFollowList(ctx context.Context, userID int64) ([]dao.User, error) {
@@ -66,6 +182,7 @@ func GetFanList(ctx context.Context, userID int64) ([]dao.User, error) {
 	return userList, nil
 }
 
+// GetFriendList 获取朋友列表
 func GetFriendList(ctx context.Context, userID int64) ([]dao.User, error) {
 	friendKey := utls.CreateFriendKey(userID)
 	friendIDs, err := cache.GetAllMembersByKey(ctx, friendKey)
@@ -92,6 +209,7 @@ func GetFriendList(ctx context.Context, userID int64) ([]dao.User, error) {
 	return userList, nil
 }
 
+// IsFollowTarget 判断是否关注了对方
 func IsFollowTarget(ctx context.Context, userID int64, targetID int64) (bool, error) {
 	if userID == targetID {
 		return false, nil
@@ -132,6 +250,7 @@ func IsFollowTarget(ctx context.Context, userID int64, targetID int64) (bool, er
 	return exist, nil
 }
 
+// IsFollowManyTargets 判断是否关注了多人
 func IsFollowManyTargets(ctx context.Context, userID int64, targetIDs []int64) ([]bool, error) {
 	isFollowList := make([]bool, len(targetIDs))
 	for i := range targetIDs {
@@ -144,9 +263,16 @@ func IsFollowManyTargets(ctx context.Context, userID int64, targetIDs []int64) (
 	return isFollowList, nil
 }
 
+// AddFollowCount 增加关注数（写回）
 func AddFollowCount(ctx context.Context, userID, targetID int64) error {
 	userCountKey := utls.CreateUserCountKey(userID)
 	targetCountKey := utls.CreateUserCountKey(targetID)
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return err
+	}
+	if err := SetUserCountToCache(ctx, targetID); err != nil {
+		return err
+	}
 	if err := cache.AddFollowCount(ctx, userCountKey); err != nil {
 		return err
 	}
@@ -156,9 +282,16 @@ func AddFollowCount(ctx context.Context, userID, targetID int64) error {
 	return nil
 }
 
+// SubFollowCount 减少关注数（写回）
 func SubFollowCount(ctx context.Context, userID, targetID int64) error {
 	userCountKey := utls.CreateUserCountKey(userID)
 	targetCountKey := utls.CreateUserCountKey(targetID)
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return err
+	}
+	if err := SetUserCountToCache(ctx, targetID); err != nil {
+		return err
+	}
 	if err := cache.SubFollowCount(ctx, userCountKey); err != nil {
 		return err
 	}
