@@ -4,6 +4,7 @@ import (
 	"context"
 	"douyin/dao"
 	"douyin/utls"
+	"time"
 )
 
 // PushManyHistoryToRedis 把聊天记录推送至缓存中
@@ -15,6 +16,10 @@ func PushManyHistoryToRedis(key string, msgList []dao.Message) error {
 		contentList = append(contentList, utls.CreateMessageContent(msg.UserId, msg.ToUserId, msg.Content))
 	}
 	_, err := rc.ZAdd(context.Background(), key, scoreList, contentList)
+	if err != nil {
+		return err
+	}
+	_, err = rc.Expire(context.Background(), key, time.Hour*24)
 	return err
 }
 

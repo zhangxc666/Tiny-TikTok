@@ -4,6 +4,7 @@ import (
 	"douyin/common"
 	"douyin/dao"
 	"douyin/service"
+	"douyin/utls"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -85,7 +86,8 @@ func UserInfo(c *gin.Context) {
 		return
 	}
 
-	user, err = service.GetUserIndex(c, userID, int64(targetID))
+	user2, err := service.GetUserIndex(c, userID, int64(targetID))
+	user = utls.ChangeUser2ToUser(user2)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, UserResponse{

@@ -10,13 +10,11 @@ import (
 
 func GenerateSnapshot(videoPath, snapshotPath string, frameNum int) (err error) {
 	buf := bytes.NewBuffer(nil)
-	fmt.Println(videoPath, snapshotPath)
 	err = ffmpeg.Input(videoPath).
 		Filter("select", ffmpeg.Args{fmt.Sprintf("gte(n,%d)", frameNum)}).
 		Output("pipe:", ffmpeg.KwArgs{"vframes": 1, "format": "image2", "vcodec": "mjpeg"}).
 		WithOutput(buf, os.Stdout).
 		Run()
-	fmt.Println(111)
 	if err != nil {
 		return err
 	}

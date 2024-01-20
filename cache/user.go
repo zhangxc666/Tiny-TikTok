@@ -65,6 +65,11 @@ func AddWorkCount(c context.Context, key string) error {
 	return err
 }
 
+func SubWorkCount(c context.Context, key string) error {
+	rc := MakeRdbCache()
+	_, err := rc.IncrHMCount(c, key, "work_count", -1)
+	return err
+}
 func AddFavorCount(ctx context.Context, key string) error {
 	rc := MakeRdbCache()
 	_, err := rc.IncrHMCount(ctx, key, "favorite_count", 1)

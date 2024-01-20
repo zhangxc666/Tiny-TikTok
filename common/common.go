@@ -2,7 +2,6 @@
 package common
 
 import (
-	"douyin/cache"
 	"douyin/dao"
 )
 
@@ -13,27 +12,27 @@ type Response struct {
 
 // UserCountSearchStrategy 做了缓存后计数的查找策略
 func UserCountSearchStrategy(user *dao.User, userid int64) error {
-	var err error
-	user.TotalFavorite, err = cache.GetUserTotalFavoriteCount(userid)
-	if err != nil {
-		user.TotalFavorite, err = dao.GetUserInstance().QueryTotalFavorite(userid)
-		if err != nil {
-			return err
-		}
-	}
-	user.WorkCount, err = cache.GetUserWorkCount(userid)
-	if err != nil {
-		user.WorkCount, err = dao.GetUserInstance().QueryWorkCount(userid)
-		if err != nil {
-			return err
-		}
-	}
-	user.FavoriteCount, err = cache.GetUserFavoriteCount(userid)
-	if err != nil {
-		user.FavoriteCount, err = dao.GetUserInstance().QueryFavoriteCount(userid)
-		if err != nil {
-			return err
-		}
-	}
+	//var err error
+	//user.TotalFavorite, err = cache.GetUserTotalFavoriteCount(userid)
+	//if err != nil {
+	//	user.TotalFavorite, err = dao.GetUserInstance().QueryTotalFavorite(userid)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	//user.WorkCount, err = cache.GetUserWorkCount(userid)
+	//if err != nil {
+	//	user.WorkCount, err = dao.GetUserInstance().QueryWorkCount(userid)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	//user.FavoriteCount, err = cache.GetUserFavoriteCount(userid)
+	//if err != nil {
+	//	user.FavoriteCount, err = dao.GetUserInstance().QueryFavoriteCount(userid)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }

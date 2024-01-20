@@ -83,13 +83,13 @@ func (UserDao2) ExistUserByUserID(userID int64) (bool, error) {
 
 func (UserDao2) QueryUserInfoByUsername(username string) (*User2, error) {
 	var user User2
-	err := db.Model(&User2{}).Where("name = ?", username).Find(&user).Error
+	err := db.Preload("Usercount").Preload("VideoLieLists").Model(&User2{}).Where("name = ?", username).Find(&user).Error
 	return &user, err
 }
 
 func (UserDao2) QueryUserInfoByUserID(userID int64) (*User2, error) {
 	var user User2
-	err := db.Debug().Preload("Usercount").Model(&User2{}).Where("user_id = ?", userID).Find(&user).Error
+	err := db.Debug().Preload("Usercount").Preload("VideoLieLists").Model(&User2{}).Where("user_id = ?", userID).Find(&user).Error
 	return &user, err
 }
 

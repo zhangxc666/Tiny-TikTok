@@ -211,7 +211,8 @@ func GetFriendList(ctx context.Context, userID int64) ([]dao.User, error) {
 
 // IsFollowTarget 判断是否关注了对方
 func IsFollowTarget(ctx context.Context, userID int64, targetID int64) (bool, error) {
-	if userID == targetID {
+
+	if userID == targetID || userID == -1 {
 		return false, nil
 	}
 	followKey := utls.CreateFollowKey(userID)

@@ -121,7 +121,7 @@ func Login(ctx context.Context, username, password string) (*UserRegisInfo, erro
 	return &info, nil
 }
 
-func GetUserIndex(ctx context.Context, userID, targetID int64) (*dao.User, error) {
+func GetUserIndex(ctx context.Context, userID, targetID int64) (*dao.User2, error) {
 	var isFollow bool
 	var err error
 	if userID == targetID {
@@ -147,7 +147,7 @@ func GetUserIndex(ctx context.Context, userID, targetID int64) (*dao.User, error
 	if userInfo != nil {
 		userInfo.Usercount = userCount
 		userInfo.IsFollow = isFollow
-		return utls.ChangeUser2ToUser(userInfo), nil
+		return userInfo, nil
 	}
 	user, err := dao.GetUser2Instance().QueryUserInfoByUserID(userID)
 	if err != nil {
@@ -159,8 +159,7 @@ func GetUserIndex(ctx context.Context, userID, targetID int64) (*dao.User, error
 	if err = cache.SetUserCount(ctx, userCountKey, utls.CreateMapUserCount(user.Usercount)); err != nil {
 		return nil, err
 	}
-
-	return utls.ChangeUser2ToUser(user), nil
+	return user, nil
 }
 
 func SetUserCountToCache(ctx context.Context, userID int64) error {
@@ -185,6 +184,17 @@ func AddWorkCount(ctx context.Context, userID int64) error {
 		return err
 	}
 	if err := cache.AddWorkCount(ctx, userCountKey); err != nil {
+		return err
+	}
+	return nil
+}
+
+func SubWorkCount(ctx context.Context, userID int64) error {
+	userCountKey := utls.CreateUserCountKey(userID)
+	if err := SetUserCountToCache(ctx, userID); err != nil {
+		return err
+	}
+	if err := cache.SubWorkCount(ctx, userCountKey); err != nil {
 		return err
 	}
 	return nil

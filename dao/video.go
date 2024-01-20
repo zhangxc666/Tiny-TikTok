@@ -7,16 +7,28 @@ import (
 )
 
 type Video struct {
-	ID            int64  `gorm:"column:video_id"       json:"id,omitempty"`
-	Author        User   `gorm:"foreignKey:UserId"     json:"author"`
-	UserId        int64  `gorm:"column:user_id"        json:"-"`
+	ID            int64  `gorm:"column:video_id"       json:"id,string"`
+	Author        User2  `gorm:"foreignKey:UserId"     json:"author"`
+	UserId        int64  `gorm:"column:user_id"        json:"user_id,string"`
 	PlayUrl       string `gorm:"column:play_url"       json:"play_url,omitempty"`
 	CoverUrl      string `gorm:"column:cover_url"      json:"cover_url,omitempty"`
-	FavoriteCount int64  `gorm:"column:favorite_count" json:"favorite_count,omitempty"`
-	CommentCount  int64  `gorm:"column:comment_count"  json:"comment_count,omitempty"`
+	FavoriteCount int64  `gorm:"column:favorite_count" json:"favorite_count,string"`
+	CommentCount  int64  `gorm:"column:comment_count"  json:"comment_count,string"`
 	Title         string `gorm:"column:title"          json:"title,omitempty"`
 	TimeStamp     int64  `gorm:"column:timestamp"      json:"-"`
-	IsFavorite    bool   `gorm:"-"                     json:"is_favorite"`
+	IsFavorite    bool   `gorm:"-"                     json:"is_favorite,string"`
+}
+type RetVideo struct {
+	ID            int64  `gorm:"column:video_id"       json:"id,string"`
+	Author        User   `gorm:"foreignKey:UserId"     json:"author"`
+	UserId        int64  `gorm:"column:user_id"        json:"user_id,string"`
+	PlayUrl       string `gorm:"column:play_url"       json:"play_url,omitempty"`
+	CoverUrl      string `gorm:"column:cover_url"      json:"cover_url,omitempty"`
+	FavoriteCount int64  `gorm:"column:favorite_count" json:"favorite_count,string"`
+	CommentCount  int64  `gorm:"column:comment_count"  json:"comment_count,string"`
+	Title         string `gorm:"column:title"          json:"title,omitempty"`
+	TimeStamp     int64  `gorm:"column:timestamp"      json:"-"`
+	IsFavorite    bool   `gorm:"-"                     json:"is_favorite,string"`
 }
 
 func (Video) TableName() string {
@@ -63,6 +75,24 @@ func (VideoDao) QueryVideoByUserId(userid int64) ([]Video, error) {
 		return nil, err
 	}
 	return videoLists, nil
+}
+
+func (VideoDao) QueryVideoInfoByVideoID(videoID int64) (*Video, error) {
+	var video Video
+	res := db.Model(&Video{}).Where("video_id = ?", videoID).Find(&video)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return &video, nil
+}
+
+func (VideoDao) QueryVideoIDsByUserId(userid int64) ([]int64, error) {
+	IDs := []int64{}
+	res := db.Model(&Video{}).Where("user_id = ?", userid).Select("video_id").Find(&IDs)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return IDs, nil
 }
 
 func (VideoDao) AddVideo(video *Video) error {

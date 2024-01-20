@@ -2,7 +2,6 @@ package service
 
 import (
 	"douyin/cache"
-	"douyin/common"
 	"douyin/dao"
 	"errors"
 	"fmt"
@@ -95,7 +94,7 @@ func GetLikeLists(userid int64) ([]dao.Video, error) {
 	}
 	for index := range VideoLists {
 		VideoLists[index].IsFavorite = true
-		err := common.UserCountSearchStrategy(&VideoLists[index].Author, VideoLists[index].Author.ID)
+		//err := common.UserCountSearchStrategy(&VideoLists[index].Author, VideoLists[index].Author.ID)
 		if err != nil {
 			return nil, err
 		}

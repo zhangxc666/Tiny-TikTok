@@ -10,7 +10,10 @@ Gin+Gorm+Go-Redis+Ffmpeg+Mysql+Redis
 
 - 完成message功能，增加了message缓存（写回）
 - 完成User功能，增加了count（写回），info（旁路缓存）的缓存
-- 完成follow功能，增加了关注、粉丝和好友id的缓存（延迟双删）。
+- 完成follow功能，增加了关注、粉丝和好友id的缓存（延迟双删）
+- 完成video功能，增加了video_info（写回）缓存和系统用户发布视频（旁路缓存）缓存
+  - [ ] 上传至OSS中
+  - [ ] 增加video计数表解耦  
 
 
 

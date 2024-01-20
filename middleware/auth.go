@@ -32,7 +32,7 @@ func UserAuth() gin.HandlerFunc {
 		}
 
 		//解析
-		fmt.Println(token)
+		//fmt.Println(token)
 		t, claim, err := utls.ParseToken(token)
 
 		//判断是否有效

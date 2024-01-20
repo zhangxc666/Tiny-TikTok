@@ -18,4 +18,4 @@ redis:
 # resource(静态图片和视频的资源)
 resouece:
   ipaddress: localhost
-  port: 3000
+  port: 8000

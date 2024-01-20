@@ -23,5 +23,34 @@ func TestUserDao2_AddUser(t *testing.T) {
 func TestUserDao2_QueryUserInfoByUserID(t *testing.T) {
 	DBInit()
 	user, _ := GetUser2Instance().QueryUserInfoByUserID(1)
-	fmt.Println(user.Usercount)
+	fmt.Println(*user)
 }
+
+//func TestUserDao2_QueryUserInfoByUserID1(t *testing.T) {
+//	DBInit()
+//	user,_:=GetUser2Instance().q
+//	type args struct {
+//		userID int64
+//	}
+//	tests := []struct {
+//		name    string
+//		args    args
+//		want    *User2
+//		wantErr bool
+//	}{
+//		// TODO: Add test cases.
+//	}
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			us := UserDao2{}
+//			got, err := us.QueryUserInfoByUserID(tt.args.userID)
+//			if (err != nil) != tt.wantErr {
+//				t.Errorf("QueryUserInfoByUserID() error = %v, wantErr %v", err, tt.wantErr)
+//				return
+//			}
+//			if !reflect.DeepEqual(got, tt.want) {
+//				t.Errorf("QueryUserInfoByUserID() got = %v, want %v", got, tt.want)
+//			}
+//		})
+//	}
+//}
