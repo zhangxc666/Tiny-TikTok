@@ -28,7 +28,9 @@ func InitRedis() (*redis.Client, error) {
 		return nil, err
 	}
 	go utls.ExecuteTimedTask(time.Second*60, PersistHistoryToDB)
-	go utls.ExecuteTimedTask(time.Second*60, PersistCountToDB)
+	go utls.ExecuteTimedTask(time.Second*60, PersistUserCountToDB)
+	go utls.ExecuteTimedTask(time.Second*60, PersistVideoInfoToDB)
+	go utls.ExecuteTimedTask(time.Second, PersistFavorToDB)
 	return rdb, nil
 }
 

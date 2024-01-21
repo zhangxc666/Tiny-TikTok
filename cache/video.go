@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+func ExistVideoInfoKey(c context.Context, key string) (bool, error) {
+	rc := MakeRdbCache()
+	exist, err := rc.Exists(c, key)
+	if err != nil {
+		return false, err
+	}
+	return exist == 1, nil
+}
 func SetVideoInfo(c context.Context, key string, value map[string]any) error {
 	rc := MakeRdbCache()
 	if err := rc.HSet(c, key, value); err != nil {
@@ -16,6 +24,25 @@ func SetVideoInfo(c context.Context, key string, value map[string]any) error {
 	}
 	_, err := rc.Expire(c, key, time.Hour*48)
 	return err
+}
+
+func SetPublishVideoIDs(c context.Context, key string, timeStamps []int64, IDs []int64) error {
+	rc := MakeRdbCache()
+	str := make([]any, len(IDs))
+	timestamp := make([]float64, len(IDs))
+	for i := range str {
+		str[i] = strconv.FormatInt(IDs[i], 10)
+		timestamp[i] = float64(timeStamps[i])
+	}
+	_, err := rc.ZAdd(c, key, timestamp, str)
+	if err != nil {
+		return err
+	}
+	_, err = rc.Expire(c, key, time.Hour*48)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func SetUserVideoIDs(c context.Context, key string, IDs []int64) error {
@@ -96,14 +123,28 @@ func GetPublishVideoIDs(c context.Context, key string, lastTime int64) (int64, [
 	if err != nil {
 		return -1, nil, err
 	}
+	var videoIDs []int64
 	if len(videoStr) == 0 {
-		return lastTime, nil, nil
+		return -1, nil, nil
 	}
-	videoIDs := make([]int64, len(videoStr))
+	videoIDs = make([]int64, len(videoStr))
 	for i, v := range videoStr {
 		videoID, _ := strconv.ParseInt(v.Member.(string), 10, 64)
 		videoIDs[i] = videoID
 	}
 	return int64(videoStr[0].Score), videoIDs, nil
+}
 
+func AddVideoFavorCount(ctx context.Context, videoID int64) error {
+	rc := MakeRdbCache()
+	videoInfoKey := utls.CreateVideoKey(videoID)
+	_, err := rc.IncrHMCount(ctx, videoInfoKey, "favorite_count", 1)
+	return err
+}
+
+func SubVideoFavorCount(ctx context.Context, videoID int64) error {
+	rc := MakeRdbCache()
+	videoInfoKey := utls.CreateVideoKey(videoID)
+	_, err := rc.IncrHMCount(ctx, videoInfoKey, "favorite_count", -1)
+	return err
 }

@@ -4,6 +4,7 @@ import (
 	"douyin/common"
 	"douyin/dao"
 	"douyin/service"
+	"douyin/utls"
 	"github.com/gin-gonic/gin"
 	_ "github.com/gin-gonic/gin"
 	"log"
@@ -16,13 +17,13 @@ type FavoriteResponse struct {
 }
 type FavoriteListsResponse struct {
 	common.Response
-	VideoLists []dao.Video `json:"video_list,omitempty"`
+	VideoLists []dao.RetVideo `json:"video_list,omitempty"`
 }
 
 func FavoriteAction(c *gin.Context) {
 	//解析得到id
 	userid := c.MustGet("userid").(int64)
-	action := c.Query("action_type")
+	action, _ := strconv.Atoi(c.Query("action_type"))
 	videoId, err := strconv.Atoi(c.Query("video_id"))
 	if err != nil {
 		log.Println(err.Error())
@@ -31,7 +32,7 @@ func FavoriteAction(c *gin.Context) {
 		})
 		return
 	}
-	err = service.ThumbUpOrCancel(action, userid, int64(videoId))
+	err = service.FavoriteAction(c, userid, int64(videoId), int(action))
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, FavoriteResponse{
@@ -56,7 +57,7 @@ func FavoriteList(c *gin.Context) {
 		return
 	}
 	//得到喜欢的列表
-	videoLists, err := service.GetLikeLists(int64(userid))
+	videoLists, err := service.FavoriteList(c, int64(userid))
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, FavoriteListsResponse{
@@ -66,7 +67,7 @@ func FavoriteList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, FavoriteListsResponse{
 		Response:   common.Response{StatusCode: 0, StatusMsg: "successful"},
-		VideoLists: videoLists,
+		VideoLists: utls.ChangeVideoToRetVideo(videoLists),
 	})
 	return
 }

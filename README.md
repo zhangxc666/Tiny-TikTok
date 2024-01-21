@@ -14,6 +14,5 @@ Gin+Gorm+Go-Redis+Ffmpeg+Mysql+Redis
 - 完成video功能，增加了video_info（写回）缓存和系统用户发布视频（旁路缓存）缓存
   - [ ] 上传至OSS中
   - [ ] 增加video计数表解耦  
-
-
+- 完成favor功能，增加了点赞（写回）缓存
 

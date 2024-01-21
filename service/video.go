@@ -6,6 +6,7 @@ import (
 	"douyin/config"
 	"douyin/dao"
 	"douyin/utls"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"mime/multipart"
@@ -20,7 +21,18 @@ func Feed(c *gin.Context, token string, lastTime int64) ([]dao.Video, int64, err
 		return nil, -1, err
 	}
 	if len(videoIDs) == 0 {
-		return nil, nextTime, nil
+		var timeStamps []int64
+		videoIDs, timeStamps, err = dao.GetVideoInstance().QueryAllPublishVideoID()
+		if err != nil {
+			return nil, -1, nil
+		}
+		if len(videoIDs) == 0 {
+			return nil, -1, errors.New("没有视频")
+		}
+		err = cache.SetPublishVideoIDs(c, feedKey, timeStamps, videoIDs)
+		if err != nil {
+			return nil, -1, err
+		}
 	}
 	var videoInfos []dao.Video
 	// 判断token是否有效
@@ -32,7 +44,6 @@ func Feed(c *gin.Context, token string, lastTime int64) ([]dao.Video, int64, err
 		}
 	}
 	videoInfos, err = GetManyVideoInfos(c, videoIDs, userID)
-	fmt.Println("videoInfos", videoInfos, "videoIDs", videoIDs)
 	if err != nil {
 		return nil, nextTime, err
 	}
@@ -113,7 +124,10 @@ func PublishList(ctx context.Context, userID int64) ([]dao.Video, error) {
 		}
 	}
 	// 根据video的IDS获取video的信息
-	//TODO 查询用户对当前视频是否点赞
+	isFavorList, err := IsManyFavorVideos(ctx, userID, videoIDs)
+	if err != nil {
+		return nil, err
+	}
 	videoList := make([]dao.Video, len(videoIDs))
 	for i := range videoList {
 		videoInfo, err := GetVideoInfoSelf(ctx, videoIDs[i])
@@ -123,7 +137,7 @@ func PublishList(ctx context.Context, userID int64) ([]dao.Video, error) {
 		videoInfo.Author = *userIndex
 		videoList[i] = *videoInfo
 		videoList[i].ID = videoIDs[i]
-		// TODO 当前用户是否点赞
+		videoList[i].IsFavorite = isFavorList[i]
 	}
 	return videoList, nil
 }
@@ -161,14 +175,26 @@ func GetVideoInfo(ctx context.Context, videoID, userID int64) (*dao.Video, error
 	if err != nil {
 		return nil, err
 	}
-	// TODO 修改点赞信息
 	videoInfo.Author = *userIndex
+	videoInfo.IsFavorite, err = IsFavorVideo(ctx, userID, videoID)
+	if err != nil {
+		return nil, err
+	}
 	return videoInfo, nil
 }
 
 // GetManyVideoInfos 批量获取VideoInfo
 func GetManyVideoInfos(ctx context.Context, videoIDs []int64, userID int64) ([]dao.Video, error) {
-	// TODO 查询是否点赞
+	var (
+		isFavor []bool
+		err     error
+	)
+	if userID != -1 {
+		isFavor, err = IsManyFavorVideos(ctx, userID, videoIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
 	videoInfos := make([]dao.Video, len(videoIDs))
 	authorIDs := make([]int64, len(videoIDs))
 	for i := range videoInfos {
@@ -179,7 +205,9 @@ func GetManyVideoInfos(ctx context.Context, videoIDs []int64, userID int64) ([]d
 		}
 		videoInfos[i] = *videoInfo
 		authorIDs[i] = videoInfo.UserId
-		// TODO 修改点赞信息
+		if userID != -1 {
+			videoInfos[i].IsFavorite = isFavor[i]
+		}
 	}
 	authorInfos, err := GetUserList(ctx, userID, authorIDs)
 	if err != nil {
@@ -191,4 +219,20 @@ func GetManyVideoInfos(ctx context.Context, videoIDs []int64, userID int64) ([]d
 	}
 
 	return videoInfos, err
+}
+
+// AddVideoFavorCount 添加视频的喜欢数
+func AddVideoFavorCount(ctx context.Context, videoID int64) error {
+	if err := cache.AddVideoFavorCount(ctx, videoID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SubVideoFavorCount 减少视频的喜欢数
+func SubVideoFavorCount(ctx context.Context, videoID int64) error {
+	if err := cache.SubVideoFavorCount(ctx, videoID); err != nil {
+		return err
+	}
+	return nil
 }

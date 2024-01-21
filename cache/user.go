@@ -70,24 +70,29 @@ func SubWorkCount(c context.Context, key string) error {
 	_, err := rc.IncrHMCount(c, key, "work_count", -1)
 	return err
 }
+
+// AddFavorCount 增加作者的喜欢数
 func AddFavorCount(ctx context.Context, key string) error {
 	rc := MakeRdbCache()
 	_, err := rc.IncrHMCount(ctx, key, "favorite_count", 1)
 	return err
 }
 
+// SubFavorCount 减少作者的喜欢数
 func SubFavorCount(ctx context.Context, key string) error {
 	rc := MakeRdbCache()
 	_, err := rc.IncrHMCount(ctx, key, "favorite_count", -1)
 	return err
 }
 
+// AddFavoritedCount 增加作者的获赞数
 func AddFavoritedCount(ctx context.Context, key string) error {
 	rc := MakeRdbCache()
 	_, err := rc.IncrHMCount(ctx, key, "total_favorited", 1)
 	return err
 }
 
+// SubFavoritedCount 减少作者的获赞数
 func SubFavoritedCount(ctx context.Context, key string) error {
 	rc := MakeRdbCache()
 	_, err := rc.IncrHMCount(ctx, key, "total_favorited", -1)

@@ -17,7 +17,6 @@ type UserRegisInfo struct {
 func GetUserList(ctx context.Context, userID int64, targetIDs []int64) ([]dao.User, error) {
 	userList := make([]dao.User, len(targetIDs))
 	isFollowList, err := IsFollowManyTargets(ctx, userID, targetIDs)
-	fmt.Println(targetIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -200,15 +199,9 @@ func SubWorkCount(ctx context.Context, userID int64) error {
 	return nil
 }
 
-func AddFavorCount(ctx context.Context, userID, targetID int64) error {
+func AddUserFavorCount(ctx context.Context, userID, targetID int64) error {
 	userCountKey := utls.CreateUserCountKey(userID)
 	targetCountKey := utls.CreateUserCountKey(targetID)
-	if err := SetUserCountToCache(ctx, userID); err != nil {
-		return err
-	}
-	if err := SetUserCountToCache(ctx, targetID); err != nil {
-		return err
-	}
 	if err := cache.AddFavorCount(ctx, userCountKey); err != nil {
 		return err
 	}
@@ -218,14 +211,8 @@ func AddFavorCount(ctx context.Context, userID, targetID int64) error {
 	return nil
 }
 
-func SubFavorCount(ctx context.Context, userID, targetID int64) error {
+func SubUserFavorCount(ctx context.Context, userID, targetID int64) error {
 	userCountKey, targetCountKey := utls.CreateUserCountKey(userID), utls.CreateUserCountKey(targetID)
-	if err := SetUserCountToCache(ctx, userID); err != nil {
-		return err
-	}
-	if err := SetUserCountToCache(ctx, targetID); err != nil {
-		return err
-	}
 	if err := cache.SubFavorCount(ctx, userCountKey); err != nil {
 		return err
 	}

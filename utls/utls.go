@@ -55,6 +55,13 @@ func CreateUserCountKey(userID int64) string {
 
 func CreateVideoKey(videoID int64) string { return "video_info::" + strconv.Itoa(int(videoID)) }
 
+func CreateFavorKey(userID int64) string {
+	return "user_favorite::" + strconv.FormatInt(userID, 10)
+}
+
+func CreateFavorMember(videoID int64, actionType int) string {
+	return strconv.Itoa(actionType) + "+" + strconv.FormatInt(videoID, 10)
+}
 func CreateMapUserInfo(userInfo *dao.User2) map[string]interface{} {
 	userStr, _ := json.Marshal(userInfo)
 	userMap := make(map[string]interface{})

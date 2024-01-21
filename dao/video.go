@@ -130,3 +130,27 @@ func (VideoDao) QueryUserIdByVideoId(videoId int64) (int64, error) {
 	}
 	return userid, nil
 }
+
+func (VideoDao) QueryAllPublishVideoID() ([]int64, []int64, error) {
+
+	var results []struct {
+		VideoID   int64 `gorm:"column:video_id"`
+		Timestamp int64 `gorm:"column:timestamp"`
+	}
+	res := db.Model(&Video{}).Select("video_id, timestamp").Order("timestamp desc").Scan(&results)
+	if res.Error != nil {
+		return nil, nil, res.Error
+	}
+	var videoIDs []int64
+	var timestamps []int64
+	for _, result := range results {
+		videoIDs = append(videoIDs, result.VideoID)
+		timestamps = append(timestamps, result.Timestamp)
+	}
+	return videoIDs, timestamps, nil
+}
+
+func (VideoDao) UpdateVideoInfo(video *Video) error {
+	res := db.Model(&Video{}).Where("video_id = ?", video.ID).Updates(video)
+	return res.Error
+}
