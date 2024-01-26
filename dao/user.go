@@ -1,11 +1,21 @@
-// Package dao 就是面向底层数据 不管其他的
 package dao
 
 import (
-	"fmt"
 	"gorm.io/gorm"
 	"sync"
 )
+
+type User2 struct {
+	ID              int64      `gorm:"column:user_id" json:"id,string"`
+	Name            string     `gorm:"column:name"    json:"name"`
+	Password        string     `gorm:"column:password"       json:"-"`
+	IsFollow        bool       `gorm:"-"                     json:"-" `
+	Avatar          string     `gorm:"column:avatar"         json:"avatar"`
+	BackGroundImage string     `gorm:"column:background_image"        json:"background_image"`
+	Signature       string     `gorm:"column:signature"               json:"signature"`
+	Usercount       *UserCount `gorm:"foreignKey:UserID"`
+	VideoLieLists   []Video    `gorm:"many2many:like;" json:"-"`
+}
 
 type User struct {
 	ID              int64   `gorm:"column:user_id" json:"id"`
@@ -22,124 +32,84 @@ type User struct {
 	FavoriteCount   int64   `gorm:"-"               json:"favorite_count"`
 	VideoLieLists   []Video `gorm:"many2many:like;" json:"-"`
 }
-
-// TableName 指定表名
-func (User) TableName() string {
-	return "user"
+type UserCount struct {
+	gorm.Model
+	UserID         int64 `json:"user_id,string"`
+	FollowCount    int64 `gorm:"column:follow_count"   json:"follow_count,string"`
+	FollowerCount  int64 `gorm:"column:follower_count" json:"follower_count,string"`
+	TotalFavorited int64 `gorm:"total_favorited"       json:"total_favorited,string"`
+	WorkCount      int64 `gorm:"word_count"            json:"work_count,string"`
+	FavoriteCount  int64 `gorm:"favorite_count"        json:"favorite_count,string"`
 }
 
-type UserDao struct {
+func (User2) TableName() string {
+	return "User2"
 }
 
-var userDao *UserDao
+func (UserCount) TableName() string {
+	return "user_count"
+}
 
-// 单例 接口 表示只创建一次对象
-var userOnce sync.Once
+type UserDao2 struct {
+}
 
-func GetUserInstance() *UserDao {
-	//创建单例 类比为cpp中的局部静态变量
-	userOnce.Do(func() {
-		userDao = &UserDao{}
+var userDao2 *UserDao2
+var user2Once sync.Once
+
+func GetUser2Instance() *UserDao2 {
+	user2Once.Do(func() {
+		userDao2 = &UserDao2{}
 	})
-	return userDao
+	return userDao2
 }
 
-// QueryUserLists 批量查询用户信息
-func (UserDao) QueryUserLists(targetID []int64) ([]User, error) {
-	var userLists []User
-	res := db.Model(&User{}).Where("user_id in ?", targetID).Find(&userLists)
-	if res.Error != nil {
-		return nil, res.Error
-	}
-	return userLists, nil
-}
-
-// QueryUserByID 通过id查找user
-func (UserDao) QueryUserByID(userID int64) (*User, error) {
-	var user User
-	err := db.Where("user_id = ?", userID).Find(&user).Error
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-	if err != nil {
-		return nil, err
-	}
-	//逃逸分析
-	return &user, nil
-}
-
-// QueryUserByName 通过名字找到user
-func (UserDao) QueryUserByName(name string) (*User, error) {
-
-	var user User
-	err := db.Where("name = ?", name).Find(&user).Error
-	if err != nil {
-		fmt.Println(err.Error())
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	//逃逸分析
-	return &user, nil
-}
-
-// AddUser 添加user
-func (UserDao) AddUser(user *User) error {
+func (UserDao2) AddUser(user *User2) error {
 	res := db.Create(user)
-	err := res.Error
-	if err != nil {
-		return err
+	if res.Error != nil {
+		return res.Error
 	}
 	return nil
 }
 
-// UpdateFollowCount 更新关注数量
-func (UserDao) UpdateFollowCount(userId, count int64) error {
-	err := db.Model(&User{}).Where("user_id = ?", userId).UpdateColumn("follow_count", gorm.Expr("follow_count + ?", count)).Error
-	if err != nil {
-		return err
+func (UserDao2) AddCount(count *UserCount) error {
+	res := db.Create(count)
+	if res.Error != nil {
+		return res.Error
 	}
 	return nil
 }
 
-// UpdateFollowerCount 更新粉丝数量
-func (UserDao) UpdateFollowerCount(userId, count int64) error {
-	err := db.Model(&User{}).Where("user_id = ?", userId).UpdateColumn("follower_count", gorm.Expr("follower_count + ?", count)).Error
-	if err != nil {
-		return err
-	}
-	return nil
+func (UserDao2) UpdateCount(count *UserCount) error {
+	res := db.Model(count).Where("user_id = ?", count.UserID).Updates(map[string]interface{}{"follow_count": count.FollowCount, "follower_count": count.FollowerCount})
+	return res.Error
 }
 
-// QueryWorkCount 获取作品数量
-func (UserDao) QueryWorkCount(userid int64) (int64, error) {
+func (UserDao2) ExistUserByUsername(username string) (bool, error) {
 	var count int64
-	err := db.Raw("SELECT COUNT(*) FROM video WHERE video.user_id = ?", userid).Scan(&count).Error
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
+	err := db.Model(&User2{}).Where("name = ?", username).Count(&count).Error
+	return count > 0, err
 }
 
-// QueryFavoriteCount 获取点赞的总数量
-func (UserDao) QueryFavoriteCount(userid int64) (int64, error) {
+func (UserDao2) ExistUserByUserID(userID int64) (bool, error) {
 	var count int64
-	err := db.Raw("SELECT COUNT(*) FROM `like` WHERE `like`.user_id = ?", userid).Scan(&count).Error
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
+	err := db.Model(&User2{}).Where("user_id = ?", userID).Count(&count).Error
+	return count > 0, err
 }
 
-// QueryTotalFavorite  获取收获的赞总数
-func (UserDao) QueryTotalFavorite(userid int64) (int64, error) {
-	var count int64
-	err := db.Raw("SELECT COUNT(*) FROM `like` WHERE `like`.video_id in (SELECT video_id FROM video WHERE video.user_id  = ? )", userid).Scan(&count).Error
-	if err != nil {
-		return 0, err
-	}
-	return count, nil
+func (UserDao2) QueryUserInfoByUsername(username string) (*User2, error) {
+	var user User2
+	err := db.Preload("Usercount").Preload("VideoLieLists").Model(&User2{}).Where("name = ?", username).Find(&user).Error
+	return &user, err
+}
+
+func (UserDao2) QueryUserInfoByUserID(userID int64) (*User2, error) {
+	var user User2
+	err := db.Debug().Preload("Usercount").Preload("VideoLieLists").Model(&User2{}).Where("user_id = ?", userID).Find(&user).Error
+	return &user, err
+}
+
+func (UserDao2) QueryUserCountByUserID(userID int64) (*UserCount, error) {
+	var userCount UserCount
+	err := db.Model(&UserCount{}).Where("user_id = ?", userID).Find(&userCount).Error
+	return &userCount, err
 }

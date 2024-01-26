@@ -26,7 +26,7 @@ func RouterInit(r *gin.Engine) {
 	apiRouter.POST("/favorite/action/", middleware.UserAuth(), handle.FavoriteAction)
 	apiRouter.GET("/favorite/list/", middleware.UserAuth(), handle.FavoriteList)
 	apiRouter.POST("/comment/action/", middleware.UserAuth(), handle.CommentAction)
-	apiRouter.GET("/comment/list/", middleware.UserAuth(), handle.CommentList)
+	apiRouter.GET("/comment/list/", handle.CommentList)
 	//  jextra apis - II
 	apiRouter.POST("/relation/action/", middleware.UserAuth(), handle.RelationAction)
 	apiRouter.GET("/relation/follow/list/", middleware.UserAuth(), handle.FollowList)

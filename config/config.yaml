@@ -1,7 +1,7 @@
 # mysql
 mysql:
   username: root
-  password: ""
+  password: "123456"
   ipaddress: localhost
   port: 3306
   dbname: douyin

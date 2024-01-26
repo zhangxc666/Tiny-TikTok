@@ -148,3 +148,17 @@ func SubVideoFavorCount(ctx context.Context, videoID int64) error {
 	_, err := rc.IncrHMCount(ctx, videoInfoKey, "favorite_count", -1)
 	return err
 }
+
+func AddVideoCommentCount(ctx context.Context, videoID int64) error {
+	rc := MakeRdbCache()
+	videoInfoKey := utls.CreateVideoKey(videoID)
+	_, err := rc.IncrHMCount(ctx, videoInfoKey, "comment_count", 1)
+	return err
+}
+
+func SubVideoCommentCount(ctx context.Context, videoID int64) error {
+	rc := MakeRdbCache()
+	videoInfoKey := utls.CreateVideoKey(videoID)
+	_, err := rc.IncrHMCount(ctx, videoInfoKey, "comment_count", -1)
+	return err
+}

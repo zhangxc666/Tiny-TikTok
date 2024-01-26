@@ -17,6 +17,7 @@ func UserAuth() gin.HandlerFunc {
 		//得到token字段
 		//1.get请求
 		token := c.Query("token")
+		fmt.Println("token", token)
 		if token == "" {
 			//2.post请求
 			token = c.PostForm("token")
@@ -29,10 +30,9 @@ func UserAuth() gin.HandlerFunc {
 			})
 			//终止
 			c.Abort()
+			return
 		}
-
 		//解析
-		//fmt.Println(token)
 		t, claim, err := utls.ParseToken(token)
 
 		//判断是否有效

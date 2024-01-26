@@ -4,6 +4,7 @@ import (
 	"douyin/common"
 	"douyin/dao"
 	"douyin/service"
+	"douyin/utls"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -23,20 +24,17 @@ func CommentAction(c *gin.Context) {
 
 	var (
 		Comment   *dao.Comment
-		videoId   int
-		commentId int
+		videoID   int64
+		commentID int64
 		err       error
 	)
-	//得到userid
-	userid := c.MustGet("userid").(int64)
-	//得到评论动作
+	userID := c.MustGet("userid").(int64)
 	action := c.Query("action_type")
-	//得到评论内容
 	commentText := c.Query("comment_text")
 	//得到video_id
-	videoIdStr := c.Query("video_id")
-	if videoIdStr != "" {
-		videoId, err = strconv.Atoi(c.Query("video_id"))
+	videoIDStr := c.Query("video_id")
+	if videoIDStr != "" {
+		videoID, err = strconv.ParseInt(videoIDStr, 10, 64)
 		if err != nil {
 			log.Println(err.Error())
 			c.JSON(http.StatusOK, CommentResponse{
@@ -46,9 +44,9 @@ func CommentAction(c *gin.Context) {
 		}
 	}
 	//得到评论id
-	commentIdStr := c.Query("comment_id")
-	if commentIdStr != "" {
-		commentId, err = strconv.Atoi(commentIdStr)
+	commentIDStr := c.Query("comment_id")
+	if commentIDStr != "" {
+		commentID, err = strconv.ParseInt(commentIDStr, 10, 64)
 		if err != nil {
 			log.Println(err.Error())
 			c.JSON(http.StatusOK, CommentResponse{
@@ -57,8 +55,15 @@ func CommentAction(c *gin.Context) {
 			return
 		}
 	}
+	ok, err := service.CheckComment(action, commentText)
+	if err != nil || ok == false {
+		log.Println(err.Error())
+		c.JSON(http.StatusOK, CommentResponse{
+			Response: common.Response{StatusCode: 1, StatusMsg: err.Error()},
+		})
+	}
 	//进行方法判断
-	Comment, err = service.CommentOrDelete(action, userid, int64(videoId), int64(commentId), commentText)
+	Comment, err = service.CommentAction(c, userID, videoID, commentID, action, commentText)
 	if err != nil {
 		log.Println(err.Error())
 		c.JSON(http.StatusOK, CommentResponse{
@@ -83,15 +88,22 @@ func CommentAction(c *gin.Context) {
 func CommentList(c *gin.Context) {
 	var commentLists []dao.Comment
 
-	videoId, err := strconv.Atoi(c.Query("video_id"))
-
+	videoID, err := strconv.Atoi(c.Query("video_id"))
 	if err != nil {
 		c.JSON(http.StatusOK, CommentListsResponse{
 			Response: common.Response{StatusCode: 1, StatusMsg: err.Error()},
 		})
 		return
 	}
-	commentLists, err = service.GetCommentLists(int64(videoId))
+	token := c.Query("token")
+	userID := int64(-1)
+	if token != "" {
+		t, claim, err := utls.ParseToken(token)
+		if t.Valid == true && err == nil {
+			userID = claim.UserId
+		}
+	}
+	commentLists, err = service.GetCommentList(c, userID, int64(videoID))
 	if err != nil {
 		c.JSON(http.StatusOK, CommentListsResponse{
 			Response: common.Response{StatusCode: 1, StatusMsg: err.Error()},
